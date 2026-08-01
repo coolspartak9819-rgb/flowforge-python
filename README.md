@@ -10,14 +10,19 @@ The first vertical slice includes:
 
 • FastAPI HTTP API;
 • PostgreSQL persistence for workflow definitions and runs;
-• an asynchronous workflow engine with `log`, `delay` and intentional `fail` steps;
+• a separate Redis Streams worker with `log`, `delay` and intentional `fail` steps;
 • run status transitions: `PENDING`, `RUNNING`, `COMPLETED` and `FAILED`;
 • a browser dashboard for creating workflows and starting runs;
 • Docker Compose health checks and a reproducible local environment.
 
-The next milestones are separate workers, leases and heartbeats, retries,
-transactional outbox, Redis, Kafka, metrics and chaos scenarios. Those pieces
-will be added only when they are covered by tests and a runnable demo.
+The API writes a run to PostgreSQL and publishes its ID to Redis Streams. The
+worker consumes the stream and updates the durable run state. Redis consumer
+groups provide the delivery boundary; a message is acknowledged only after
+the worker finishes processing it.
+
+The next milestones are leases and heartbeats, retries, transactional outbox,
+Kafka, metrics and chaos scenarios. Those pieces will be added only when they
+are covered by tests and a runnable demo.
 
 ## Run
 

@@ -13,18 +13,6 @@ def utc_now() -> datetime:
 
 
 class WorkflowEngine:
-    def __init__(self) -> None:
-        self._tasks: set[asyncio.Task[None]] = set()
-
-    def start(self, run_id: str) -> None:
-        task = asyncio.create_task(self.execute(run_id))
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
-
-    async def shutdown(self) -> None:
-        if self._tasks:
-            await asyncio.gather(*self._tasks, return_exceptions=True)
-
     async def execute(self, run_id: str) -> None:
         async with session_factory() as session:
             run = await session.get(WorkflowRun, run_id)
@@ -35,12 +23,16 @@ class WorkflowEngine:
                 await self._fail(session, run, "workflow not found")
                 return
 
-            run.status = "RUNNING"
-            run.started_at = utc_now()
-            await session.commit()
+            if run.status in {"COMPLETED", "FAILED"}:
+                return
+            if run.status == "PENDING":
+                run.status = "RUNNING"
+                run.started_at = utc_now()
+                await session.commit()
 
             try:
-                for index, step in enumerate(workflow.definition):
+                for index in range(run.current_step, len(workflow.definition)):
+                    step = workflow.definition[index]
                     run.current_step = index
                     await session.commit()
                     await self._run_step(step)

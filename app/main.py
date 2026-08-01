@@ -5,24 +5,30 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db import engine, get_session, init_db
-from app.engine import WorkflowEngine
 from app.models import Workflow, WorkflowRun
+from app.queue import enqueue_run, ensure_consumer_group
 from app.schemas import RunResponse, WorkflowCreate, WorkflowResponse
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-engine_runner = WorkflowEngine()
+redis_client: Redis | None = None
 web_path = Path(__file__).parent / "web" / "index.html"
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    global redis_client
     await init_db()
+    redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
+    await redis_client.ping()
+    await ensure_consumer_group(redis_client)
     yield
-    await engine_runner.shutdown()
+    await redis_client.aclose()
     await engine.dispose()
 
 
@@ -68,7 +74,9 @@ async def start_run(workflow_id: str, session: AsyncSession = Depends(get_sessio
     session.add(run)
     await session.commit()
     await session.refresh(run)
-    engine_runner.start(run.id)
+    if redis_client is None:
+        raise HTTPException(status_code=503, detail="queue is not ready")
+    await enqueue_run(redis_client, run.id)
     return _run_response(run)
 
 
