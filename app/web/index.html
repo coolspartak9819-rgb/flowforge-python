@@ -1,46 +1,122 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FlowForge | Оркестратор workflow</title>
+  <title>FlowForge | Панель workflow</title>
   <style>
-    :root { color-scheme: dark; --bg:#0b1020; --panel:#121a2d; --line:#263455; --text:#eaf0ff; --muted:#91a0c0; --accent:#6ee7b7; --danger:#fb7185; }
-    * { box-sizing:border-box; } body { margin:0; background:radial-gradient(circle at top right,#20325b 0,#0b1020 42%); color:var(--text); font:15px/1.5 Inter,system-ui,sans-serif; }
-    main { width:min(1180px,calc(100% - 32px)); margin:0 auto; padding:42px 0; } header { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-bottom:28px; }
-    h1 { margin:0; font-size:42px; letter-spacing:-1px; } h2 { margin:0 0 16px; font-size:20px; } p { color:var(--muted); }
-    .tag { color:var(--accent); letter-spacing:.14em; text-transform:uppercase; font-size:12px; } .grid { display:grid; grid-template-columns:360px 1fr; gap:18px; }
-    .panel { background:rgba(18,26,45,.9); border:1px solid var(--line); border-radius:12px; padding:22px; box-shadow:0 18px 50px #0003; }
-    label { display:block; color:var(--muted); font-size:13px; margin:14px 0 6px; } input,textarea,select { width:100%; border:1px solid var(--line); border-radius:7px; background:#0d1528; color:var(--text); padding:10px; font:inherit; } textarea { min-height:145px; resize:vertical; }
-    button { border:0; border-radius:7px; padding:10px 14px; color:#061318; background:var(--accent); font-weight:700; cursor:pointer; margin-top:16px; } button:hover { filter:brightness(1.08); transform:translateY(-1px); }
-    .row { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); } .row:last-child { border-bottom:0; } .name { font-weight:700; } small { color:var(--muted); display:block; }
-    .status { border-radius:999px; padding:4px 9px; font-size:11px; letter-spacing:.04em; } .RUNNING { color:#fcd34d; background:#fcd34d22; } .COMPLETED { color:var(--accent); background:#6ee7b722; } .FAILED { color:var(--danger); background:#fb718522; } .PENDING { color:#b4c1dd; background:#b4c1dd22; }
-    .empty { color:var(--muted); padding:26px 0; text-align:center; } code { color:var(--accent); }
-    @media (max-width:800px) { header { display:block; } .grid { grid-template-columns:1fr; } h1 { font-size:34px; } }
+    :root {
+      color-scheme: dark;
+      --bg: #07090d;
+      --panel: #0d1118;
+      --panel-soft: #111721;
+      --line: #24303d;
+      --line-bright: #36515c;
+      --text: #f4f7f8;
+      --muted: #89969d;
+      --cyan: #24c8ee;
+      --green: #18d69b;
+      --yellow: #f5c542;
+      --red: #ff6578;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1380px, calc(100% - 36px)); margin: 0 auto; padding: 28px 0 56px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-bottom: 26px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--green); border-radius: 9px; color: var(--green); font-weight: 900; box-shadow: 0 0 22px #18d69b33; }
+    .brand-name { font-size: 17px; font-weight: 800; letter-spacing: .03em; }
+    .brand-sub { margin-left: 8px; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; }
+    .online { display: inline-flex; align-items: center; gap: 7px; color: var(--green); }
+    .online::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+    .hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 28px; align-items: end; padding: 54px 0 36px; }
+    .eyebrow { margin: 0 0 12px; color: var(--cyan); font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+    h1 { max-width: 800px; margin: 0; font-size: clamp(38px, 6vw, 82px); line-height: .98; letter-spacing: -.06em; }
+    h1 span { color: var(--green); }
+    .hero-copy { max-width: 570px; margin: 20px 0 0; color: var(--muted); font-size: 16px; }
+    .hero-note { justify-self: end; max-width: 310px; padding: 18px; border-left: 2px solid var(--yellow); color: #c5ced1; background: #0b0f15; }
+    .hero-note strong { display: block; margin-bottom: 8px; color: var(--yellow); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+    .stat { min-height: 105px; padding: 18px; border: 1px solid var(--line); background: var(--panel); }
+    .stat-label { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+    .stat-value { margin-top: 12px; color: var(--cyan); font-size: 31px; font-weight: 800; }
+    .stat:nth-child(2) .stat-value { color: var(--green); }
+    .stat:nth-child(3) .stat-value { color: var(--yellow); }
+    .stat:nth-child(4) .stat-value { color: var(--red); }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 10px; align-items: start; }
+    .panel { border: 1px solid var(--line); background: var(--panel); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .panel-kicker { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
+    .workflow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 10px; }
+    .workflow-card { min-height: 162px; padding: 18px; border: 1px solid var(--line); background: var(--panel-soft); transition: border-color .2s, transform .2s, box-shadow .2s; }
+    .workflow-card:hover { border-color: var(--cyan); box-shadow: 0 0 24px #24c8ee18; transform: translateY(-2px); }
+    .card-top { display: flex; justify-content: space-between; gap: 12px; }
+    .card-index { color: var(--yellow); font-weight: 800; }
+    .workflow-card h3 { margin: 28px 0 6px; font-size: 18px; }
+    .workflow-card p { min-height: 42px; margin: 0; color: var(--muted); font-size: 13px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; }
+    .steps { color: var(--cyan); font-size: 12px; }
+    .run-button, .create-button { border: 1px solid var(--green); color: #04130e; background: var(--green); padding: 8px 12px; font-weight: 800; }
+    .run-button:hover, .create-button:hover { box-shadow: 0 0 18px #18d69b66; }
+    .empty { padding: 36px 20px; color: var(--muted); text-align: center; }
+    .run-list { padding: 0 20px; }
+    .run-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .run-row:last-child { border-bottom: 0; }
+    .run-title { font-weight: 700; }
+    .run-meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .status { padding: 4px 8px; border: 1px solid currentColor; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+    .status-PENDING { color: #aebcc2; }
+    .status-RUNNING { color: var(--yellow); }
+    .status-COMPLETED { color: var(--green); }
+    .status-FAILED { color: var(--red); }
+    .form-panel { position: sticky; top: 18px; }
+    .form-body { padding: 20px; }
+    label { display: block; margin: 15px 0 7px; color: var(--muted); font-size: 12px; }
+    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 0; outline: 0; background: #080c12; color: var(--text); padding: 11px; }
+    input:focus, textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px #24c8ee1c; }
+    textarea { min-height: 190px; resize: vertical; font: 12px/1.5 ui-monospace, SFMono-Regular, monospace; }
+    .create-button { width: 100%; margin-top: 16px; }
+    .message { min-height: 20px; margin: 12px 0 0; color: var(--green); font-size: 12px; }
+    code { color: var(--cyan); }
+    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-note { justify-self: stretch; max-width: none; } .workspace { grid-template-columns: 1fr; } .form-panel { position: static; } }
+    @media (max-width: 650px) { .shell { width: min(100% - 22px, 1380px); padding-top: 16px; } .brand-sub { display: none; } .top-actions { font-size: 0; } .stats { grid-template-columns: repeat(2, 1fr); } .workflow-grid { grid-template-columns: 1fr; } h1 { font-size: 46px; } }
   </style>
 </head>
-<body><main>
-  <header><div><div class="tag">Платформа управления workflow</div><h1>FlowForge</h1><p>Создавайте, запускайте и отслеживайте многошаговые процессы.</p></div><div><span class="tag">API работает</span></div></header>
-  <section class="grid">
-    <form class="panel" id="workflow-form"><h2>Создать workflow</h2><label>Название</label><input id="name" required value="Обработка заказа"><label>Описание</label><input id="description" value="Резервирование, оплата и уведомление"><label>Шаги (JSON)</label><textarea id="steps">[
+<body>
+  <main class="shell">
+    <nav class="topbar"><div class="brand"><div class="brand-mark">F</div><div><span class="brand-name">FLOWFORGE</span><span class="brand-sub">WORKFLOW CONTROL PLANE</span></div></div><div class="top-actions"><span class="online">СИСТЕМА ОНЛАЙН</span><span>v0.1.0</span></div></nav>
+    <section class="hero"><div><p class="eyebrow">Асинхронная оркестрация процессов</p><h1>Запускай процессы.<br><span>Контролируй результат.</span></h1><p class="hero-copy">Создавай многошаговые workflow, запускай их через worker и наблюдай за каждым переходом состояния в одном control center.</p></div><aside class="hero-note"><strong>Сейчас в системе</strong><span>API принимает запуски, Redis Streams передаёт их worker, PostgreSQL хранит состояние выполнения.</span></aside></section>
+    <section class="stats"><div class="stat"><div class="stat-label">Всего workflow</div><div id="stat-workflows" class="stat-value">0</div></div><div class="stat"><div class="stat-label">Выполняются</div><div id="stat-running" class="stat-value">0</div></div><div class="stat"><div class="stat-label">Завершены</div><div id="stat-completed" class="stat-value">0</div></div><div class="stat"><div class="stat-label">Ошибки</div><div id="stat-failed" class="stat-value">0</div></div></section>
+    <section class="workspace"><div class="panel"><div class="panel-head"><div><span class="panel-kicker">Каталог процессов</span><h2>Workflow</h2></div><span id="workflow-count" class="panel-kicker">0 записей</span></div><div id="workflows" class="workflow-grid"><div class="empty">Загрузка...</div></div><div class="panel-head"><div><span class="panel-kicker">История выполнения</span><h2>Последние запуски</h2></div></div><div id="runs" class="run-list"><div class="empty">Загрузка...</div></div></div>
+      <form class="panel form-panel" id="workflow-form"><div class="panel-head"><div><span class="panel-kicker">Новая конфигурация</span><h2>Создать workflow</h2></div></div><div class="form-body"><label for="name">Название</label><input id="name" required value="Обработка заказа"><label for="description">Описание</label><input id="description" value="Резервирование, оплата и уведомление"><label for="steps">Шаги процесса в JSON</label><textarea id="steps">[
   {"name":"Резервирование товара","kind":"delay","seconds":0.5},
   {"name":"Авторизация платежа","kind":"delay","seconds":0.8},
   {"name":"Отправка уведомления","kind":"log","message":"Заказ обработан"}
-]</textarea><button>Создать workflow</button><p id="form-message"></p></form>
-    <div class="panel"><h2>Workflow</h2><div id="workflows" class="empty">Загрузка...</div></div>
-  </section>
-  <section class="panel" style="margin-top:18px"><h2>Последние запуски</h2><div id="runs" class="empty">Загрузка...</div></section>
-</main><script>
-const $ = id => document.getElementById(id);
-async function api(path, options) { const response = await fetch(path, options); if (!response.ok) throw new Error(await response.text()); return response.json(); }
-async function refresh() {
-  const [workflows, runs] = await Promise.all([api('/api/workflows'), api('/api/runs')]);
-  $('workflows').innerHTML = workflows.length ? workflows.map(w => `<div class="row"><div><div class="name">${escapeHtml(w.name)}</div><small>${w.steps.length} шагов · ${escapeHtml(w.description)}</small></div><button onclick="runWorkflow('${w.id}')">Запустить</button></div>`).join('') : '<div class="empty">Workflow пока нет.</div>';
-  $('runs').innerHTML = runs.length ? runs.map(r => `<div class="row"><div><div class="name"><code>${r.id.slice(0,8)}</code> · шаг ${r.current_step}</div><small>${r.error ? escapeHtml(r.error) : r.created_at}</small></div><span class="status ${r.status}">${statusLabel(r.status)}</span></div>`).join('') : '<div class="empty">Запусков пока нет.</div>';
-}
-async function runWorkflow(id) { await api(`/api/workflows/${id}/runs`, {method:'POST'}); await refresh(); }
-$('workflow-form').addEventListener('submit', async event => { event.preventDefault(); try { const steps = JSON.parse($('steps').value); await api('/api/workflows', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({name:$('name').value, description:$('description').value, steps})}); $('form-message').textContent='Workflow создан'; await refresh(); } catch (error) { $('form-message').textContent='Ошибка: ' + error.message; } });
-function statusLabel(status) { return ({PENDING:'Ожидает', RUNNING:'Выполняется', COMPLETED:'Завершён', FAILED:'Ошибка'})[status] || status; }
-function escapeHtml(value) { return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
-refresh(); setInterval(refresh, 1500);
-</script></body></html>
+]</textarea><button class="create-button">Создать workflow</button><p id="form-message" class="message"></p></div></form>
+    </section>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    async function api(path, options) { const response = await fetch(path, options); if (!response.ok) throw new Error(await response.text()); return response.json(); }
+    async function refresh() {
+      try {
+        const [workflows, runs] = await Promise.all([api('/api/workflows'), api('/api/runs')]);
+        const counts = runs.reduce((result, run) => { result[run.status] = (result[run.status] || 0) + 1; return result; }, {});
+        $('stat-workflows').textContent = workflows.length; $('stat-running').textContent = counts.RUNNING || 0; $('stat-completed').textContent = counts.COMPLETED || 0; $('stat-failed').textContent = counts.FAILED || 0; $('workflow-count').textContent = `${workflows.length} записей`;
+        $('workflows').innerHTML = workflows.length ? workflows.map((workflow, index) => `<article class="workflow-card"><div class="card-top"><span class="card-index">${String(index + 1).padStart(2, '0')}</span><span class="panel-kicker">READY</span></div><h3>${escapeHtml(workflow.name)}</h3><p>${escapeHtml(workflow.description)}</p><div class="card-footer"><span class="steps">${workflow.steps.length} шагов</span><button class="run-button" onclick="runWorkflow('${workflow.id}')">Запустить</button></div></article>`).join('') : '<div class="empty">Workflow пока нет.</div>';
+        $('runs').innerHTML = runs.length ? runs.map(run => `<div class="run-row"><div><div class="run-title"><code>${run.id.slice(0, 8)}</code> · шаг ${run.current_step}</div><div class="run-meta">${run.error ? escapeHtml(run.error) : formatDate(run.created_at)}</div></div><span class="status status-${run.status}">${statusLabel(run.status)}</span></div>`).join('') : '<div class="empty">Запусков пока нет.</div>';
+      } catch (error) { $('runs').innerHTML = `<div class="empty">Не удалось загрузить данные: ${escapeHtml(error.message)}</div>`; }
+    }
+    async function runWorkflow(id) { try { await api(`/api/workflows/${id}/runs`, { method: 'POST' }); await refresh(); } catch (error) { $('form-message').textContent = `Ошибка запуска: ${error.message}`; } }
+    $('workflow-form').addEventListener('submit', async event => { event.preventDefault(); try { const steps = JSON.parse($('steps').value); await api('/api/workflows', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: $('name').value, description: $('description').value, steps }) }); $('form-message').textContent = 'Workflow создан'; await refresh(); } catch (error) { $('form-message').textContent = `Ошибка: ${error.message}`; } });
+    function statusLabel(status) { return ({ PENDING: 'ОЖИДАЕТ', RUNNING: 'ВЫПОЛНЯЕТСЯ', COMPLETED: 'ЗАВЕРШЁН', FAILED: 'ОШИБКА' })[status] || status; }
+    function formatDate(value) { return new Date(value).toLocaleString('ru-RU'); }
+    function escapeHtml(value) { return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;'); }
+    refresh(); setInterval(refresh, 1500);
+  </script>
+</body>
+</html>
