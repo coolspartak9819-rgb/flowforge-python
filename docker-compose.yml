@@ -41,6 +41,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@db:5432/flowforge
       REDIS_URL: redis://redis:6379/0
       WORKER_NAME: worker-1
+      WORKER_RECOVERY_IDLE_MS: 30000
     depends_on:
       db:
         condition: service_healthy

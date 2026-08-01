@@ -18,7 +18,8 @@ The first vertical slice includes:
 The API writes a run to PostgreSQL and publishes its ID to Redis Streams. The
 worker consumes the stream and updates the durable run state. Redis consumer
 groups provide the delivery boundary; a message is acknowledged only after
-the worker finishes processing it.
+the worker finishes processing it. On startup, the worker uses `XAUTOCLAIM` to
+recover messages that remained pending after another worker stopped.
 
 The next milestones are leases and heartbeats, retries, transactional outbox,
 Kafka, metrics and chaos scenarios. Those pieces will be added only when they

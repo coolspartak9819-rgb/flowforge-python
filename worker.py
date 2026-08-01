@@ -22,7 +22,12 @@ async def main() -> None:
     consumer_name = os.getenv("WORKER_NAME", socket.gethostname())
     logger.info("FlowForge worker %s is ready", consumer_name)
     try:
-        await consume_runs(redis, consumer_name, engine_runner.execute)
+        await consume_runs(
+            redis,
+            consumer_name,
+            engine_runner.execute,
+            recovery_idle_ms=settings.worker_recovery_idle_ms,
+        )
     finally:
         await redis.aclose()
         await engine.dispose()
