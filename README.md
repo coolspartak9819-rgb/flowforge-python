@@ -14,6 +14,7 @@ The first vertical slice includes:
 • run status transitions: `PENDING`, `RUNNING`, `COMPLETED` and `FAILED`;
 • retries with exponential backoff and a maximum of three attempts;
 • idempotent run creation through the `Idempotency-Key` header;
+• Prometheus metrics with HTTP request counters and latency histogram;
 • a browser dashboard for creating workflows and starting runs;
 • Docker Compose health checks and a reproducible local environment.
 
@@ -46,6 +47,8 @@ docker compose up --build
 After starting the stack, the dashboard is available at
 [http://localhost:8000](http://localhost:8000). API documentation is available
 at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+Prometheus metrics are available at [http://localhost:8000/metrics](http://localhost:8000/metrics).
 
 Create a workflow in the dashboard and click `Run`. The run list refreshes
 automatically while the workflow is executing. To see a failure, add a step

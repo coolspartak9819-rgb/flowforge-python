@@ -4,13 +4,14 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import engine, get_session, init_db
+from app.metrics import metrics, now
 from app.models import Workflow, WorkflowRun
 from app.queue import enqueue_run, ensure_consumer_group
 from app.schemas import RunResponse, WorkflowCreate, WorkflowResponse
@@ -38,6 +39,21 @@ app = FastAPI(title="FlowForge", version="0.1.0", lifespan=lifespan)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/metrics", include_in_schema=False)
+async def prometheus_metrics() -> PlainTextResponse:
+    return PlainTextResponse(metrics.render(), media_type="text/plain; version=0.0.4")
+
+
+@app.middleware("http")
+async def observe_http(request, call_next):
+    started = now()
+    response = await call_next(request)
+    route = request.scope.get("route")
+    path = getattr(route, "path", request.url.path)
+    metrics.observe_request(request.method, path, response.status_code, now() - started)
+    return response
 
 
 @app.get("/", include_in_schema=False)
