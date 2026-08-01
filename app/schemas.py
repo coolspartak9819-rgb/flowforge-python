@@ -33,6 +33,9 @@ class RunResponse(BaseModel):
     status: str
     current_step: int
     error: str
+    attempts: int
+    max_attempts: int
+    idempotency_key: str | None
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None

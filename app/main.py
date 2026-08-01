@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.responses import FileResponse
 from redis.asyncio import Redis
 from sqlalchemy import select
@@ -66,11 +66,25 @@ async def list_workflows(session: AsyncSession = Depends(get_session)):
 
 
 @app.post("/api/workflows/{workflow_id}/runs", response_model=RunResponse, status_code=status.HTTP_202_ACCEPTED)
-async def start_run(workflow_id: str, session: AsyncSession = Depends(get_session)):
+async def start_run(
+    workflow_id: str,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    session: AsyncSession = Depends(get_session),
+):
     workflow = await session.get(Workflow, workflow_id)
     if workflow is None:
         raise HTTPException(status_code=404, detail="workflow not found")
-    run = WorkflowRun(id=str(uuid4()), workflow_id=workflow_id)
+    if idempotency_key:
+        existing = await session.scalar(
+            select(WorkflowRun).where(WorkflowRun.idempotency_key == idempotency_key)
+        )
+        if existing is not None:
+            return _run_response(existing)
+    run = WorkflowRun(
+        id=str(uuid4()),
+        workflow_id=workflow_id,
+        idempotency_key=idempotency_key,
+    )
     session.add(run)
     await session.commit()
     await session.refresh(run)
@@ -111,6 +125,9 @@ def _run_response(run: WorkflowRun) -> RunResponse:
         status=run.status,
         current_step=run.current_step,
         error=run.error,
+        attempts=run.attempts,
+        max_attempts=run.max_attempts,
+        idempotency_key=run.idempotency_key,
         created_at=run.created_at,
         started_at=run.started_at,
         finished_at=run.finished_at,

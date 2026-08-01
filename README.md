@@ -12,6 +12,8 @@ The first vertical slice includes:
 • PostgreSQL persistence for workflow definitions and runs;
 • a separate Redis Streams worker with `log`, `delay` and intentional `fail` steps;
 • run status transitions: `PENDING`, `RUNNING`, `COMPLETED` and `FAILED`;
+• retries with exponential backoff and a maximum of three attempts;
+• idempotent run creation through the `Idempotency-Key` header;
 • a browser dashboard for creating workflows and starting runs;
 • Docker Compose health checks and a reproducible local environment.
 
@@ -21,8 +23,8 @@ groups provide the delivery boundary; a message is acknowledged only after
 the worker finishes processing it. On startup, the worker uses `XAUTOCLAIM` to
 recover messages that remained pending after another worker stopped.
 
-The next milestones are leases and heartbeats, retries, transactional outbox,
-Kafka, metrics and chaos scenarios. Those pieces will be added only when they
+The next milestones are leases and heartbeats, transactional outbox, Kafka,
+metrics and chaos scenarios. Those pieces will be added only when they
 are covered by tests and a runnable demo.
 
 ## Run
