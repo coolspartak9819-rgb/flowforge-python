@@ -31,8 +31,19 @@ are covered by tests and a runnable demo.
 docker compose up --build
 ```
 
-Open [http://localhost:8000](http://localhost:8000). API documentation is
-available at [http://localhost:8000/docs](http://localhost:8000/docs).
+## Preview
+
+### Dashboard
+
+![FlowForge dashboard](docs/screenshots/dashboard.png)
+
+### API documentation
+
+![FlowForge API documentation](docs/screenshots/api-docs.png)
+
+After starting the stack, the dashboard is available at
+[http://localhost:8000](http://localhost:8000). API documentation is available
+at [http://localhost:8000/docs](http://localhost:8000/docs).
 
 Create a workflow in the dashboard and click `Run`. The run list refreshes
 automatically while the workflow is executing. To see a failure, add a step
